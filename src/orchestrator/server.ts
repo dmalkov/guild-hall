@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 import { AgentRegistry } from "../schema/registry.js";
 import { dispatch } from "./dispatcher.js";
@@ -8,6 +9,8 @@ const prisma = new PrismaClient();
 
 export function startServer(registry: AgentRegistry, port = 3001): void {
   const app = new Hono();
+
+  app.use("*", cors());
 
   // Health check
   app.get("/", (c) => c.json({ name: "The Guild Hall", status: "online" }));
@@ -60,6 +63,43 @@ export function startServer(registry: AgentRegistry, port = 3001): void {
       take: limit,
     });
     return c.json(runs);
+  });
+
+  // Get single run with nested data
+  app.get("/runs/:runId", async (c) => {
+    const runId = Number(c.req.param("runId"));
+    const run = await prisma.questRun.findUnique({
+      where: { id: runId },
+      include: {
+        normalizedResults: { orderBy: { severity: "desc" } },
+        feedback: { orderBy: { createdAt: "desc" } },
+      },
+    });
+    if (!run) {
+      return c.json({ error: `Run not found: ${runId}` }, 404);
+    }
+    return c.json(run);
+  });
+
+  // Cross-agent signal feed
+  app.get("/signals", async (c) => {
+    const limit = Number(c.req.query("limit") ?? "50");
+    const type = c.req.query("type");
+    const agent = c.req.query("agent");
+    const minSeverity = Number(c.req.query("minSeverity") ?? "1");
+
+    const where: Record<string, unknown> = {};
+    if (type) where.type = type;
+    if (agent) where.agentName = agent;
+    if (minSeverity > 1) where.severity = { gte: minSeverity };
+
+    const signals = await prisma.normalizedResult.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: { questRun: { select: { id: true, status: true, startedAt: true } } },
+    });
+    return c.json(signals);
   });
 
   // Get agent stats
