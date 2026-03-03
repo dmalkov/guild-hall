@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --color-guild-bg: #0f0f23;
+  --color-guild-surface: #1a1a2e;
+  --color-guild-border: #2a2a4a;
+  --color-guild-text: #e0e0ff;
+  --color-guild-muted: #6a6a8a;
+  --color-guild-gold: #ffd700;
+}
+
+body {
+  background: var(--color-guild-bg);
+  color: var(--color-guild-text);
+}
+
+/* Pixel font for headings */
+.font-pixel {
+  font-family: "Press Start 2P", monospace;
+}
+
+/* No border-radius — pixel aesthetic */
+* {
+  border-radius: 0 !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-guild-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-guild-border);
+  border: 1px solid var(--color-guild-bg);
+}
