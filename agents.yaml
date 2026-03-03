@@ -1,0 +1,64 @@
+agents:
+  night-thoughts:
+    name: "The Chronicler"
+    archetype: sage
+    station: study
+    trigger:
+      type: webhook
+      path: /api/ideas
+    prompt_file: ./src/prompts/night-thoughts.md
+    model: sonnet
+    autonomy_tier: auto
+    output_path: ~/Documents/Obsidian Vault/25-AI-Agents/Night-Thoughts/plans/
+    max_cost_per_run: 0.30
+    max_retries: 3
+    timeout_ms: 120000
+
+  daily-vibe-digest:
+    name: "The Oracle"
+    archetype: mage
+    station: sanctum
+    trigger:
+      type: cron
+      schedule: "0 7 * * *"
+    prompt_file: ./src/prompts/vibe-digest.md
+    model: sonnet
+    dispatch_mode: cli
+    autonomy_tier: auto
+    output_path: ~/Documents/Obsidian Vault/25-AI-Agents/Digests/Daily-Vibe-Code/
+    max_cost_per_run: 0.50
+    max_retries: 2
+    timeout_ms: 300000
+
+  slack-digest:
+    name: "The Whisper"
+    archetype: rogue
+    station: den
+    trigger:
+      type: cron
+      schedule: "0 8 * * 1-5"
+    prompt_file: ./src/prompts/slack-digest.md
+    model: sonnet
+    dispatch_mode: cli
+    autonomy_tier: auto
+    output_path: ~/Documents/Obsidian Vault/25-AI-Agents/Digests/Slack-Daily/
+    max_cost_per_run: 0.30
+    max_retries: 2
+    timeout_ms: 300000
+
+  scribe:
+    name: "The Scribe"
+    archetype: sage
+    station: study
+    trigger:
+      type: after
+      depends_on:
+        - daily-vibe-digest
+        - slack-digest
+    prompt_file: ./src/prompts/scribe.md
+    model: haiku
+    autonomy_tier: auto
+    output_path: ~/Documents/Obsidian Vault/25-AI-Agents/Digests/Daily-Brief/
+    max_cost_per_run: 0.05
+    max_retries: 2
+    timeout_ms: 60000

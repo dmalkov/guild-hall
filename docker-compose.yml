@@ -1,0 +1,23 @@
+services:
+  guild-hall:
+    build: .
+    container_name: guild-hall
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_URL=file:/data/guild-hall.db
+      - OBSIDIAN_VAULT_PATH=/vault
+      - DAILY_BUDGET_USD=5.00
+    volumes:
+      - guild-hall-data:/data
+      - ${OBSIDIAN_VAULT_PATH:-~/Documents/Obsidian Vault}:/vault
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  guild-hall-data:

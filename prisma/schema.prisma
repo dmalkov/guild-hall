@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model QuestRun {
+  id               Int       @id @default(autoincrement())
+  agentName        String    @map("agent_name")
+  archetype        String
+  startedAt        DateTime  @default(now()) @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+  status           String    @default("running") // running | success | failed | timeout
+  triggerType      String?   @map("trigger_type")
+  triggerData      String?   @map("trigger_data")
+  modelUsed        String?   @map("model_used")
+  inputTokens      Int?      @map("input_tokens")
+  outputTokens     Int?      @map("output_tokens")
+  costUsd          Float?    @map("cost_usd")
+  normalizerCostUsd Float?   @map("normalizer_cost_usd")
+  rawOutput        String?   @map("raw_output")
+  outputPath       String?   @map("output_path")
+  errorMessage     String?   @map("error_message")
+  retryCount       Int       @default(0) @map("retry_count")
+  xpEarned         Int       @default(0) @map("xp_earned")
+
+  feedback          QuestFeedback[]
+  normalizedResults NormalizedResult[]
+
+  @@map("quest_runs")
+}
+
+model NormalizedResult {
+  id              Int      @id @default(autoincrement())
+  questRunId      Int      @map("quest_run_id")
+  agentName       String   @map("agent_name")
+  archetype       String
+  type            String   // insight | risk | update | anomaly | decision
+  severity        Int      // 1-5
+  confidence      Float    // 0-1
+  summary         String
+  evidence        String   // JSON string of evidence array
+  owner           String?
+  timeSensitivity String   @map("time_sensitivity") // today | this_week | this_month
+  costUsd         Float    @map("cost_usd")
+  inputTokens     Int      @map("input_tokens")
+  outputTokens    Int      @map("output_tokens")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  questRun QuestRun @relation(fields: [questRunId], references: [id])
+
+  @@map("normalized_results")
+}
+
+model DependencyCompletion {
+  id            Int      @id @default(autoincrement())
+  agentName     String   @map("agent_name")
+  completedDate String   @map("completed_date") // YYYY-MM-DD
+  questRunId    Int      @map("quest_run_id")
+  completedAt   DateTime @default(now()) @map("completed_at")
+
+  @@unique([agentName, completedDate])
+  @@map("dependency_completions")
+}
+
+model QuestFeedback {
+  id         Int      @id @default(autoincrement())
+  questRunId Int      @map("quest_run_id")
+  rating     String   // relevant | noise | question
+  note       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  questRun QuestRun @relation(fields: [questRunId], references: [id])
+
+  @@map("quest_feedback")
+}
+
+model AgentStats {
+  agentName      String   @id @map("agent_name")
+  totalRuns      Int      @default(0) @map("total_runs")
+  totalSuccess   Int      @default(0) @map("total_success")
+  totalCost      Float    @default(0) @map("total_cost")
+  xp             Int      @default(0)
+  level          Int      @default(1)
+  precisionPct   Float    @default(0) @map("precision_pct")
+  lastCalibrated DateTime? @map("last_calibrated")
+
+  @@map("agent_stats")
+}
